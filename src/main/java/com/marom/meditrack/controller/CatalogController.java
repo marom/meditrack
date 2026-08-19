@@ -12,8 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// SMELL: one controller for two resources, no /api/v1 prefix, no validation,
-//        no error handling.
+// SMELL: one controller for two resources, no /api/v1 prefix, no validation.
 @RestController
 @RequiredArgsConstructor
 public class CatalogController {
@@ -42,7 +41,7 @@ public class CatalogController {
     @Operation(tags = "Doctor")
     @GetMapping("/doctors/{id}")
     public DoctorResponse getDoctor(@PathVariable Long id) {
-        return doctorService.findById(id);   // SMELL: returns null on miss
+        return doctorService.findById(id);
     }
 
     @Operation(tags = "Doctor")

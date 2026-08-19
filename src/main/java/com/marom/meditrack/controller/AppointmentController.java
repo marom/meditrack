@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// SMELL: no /api/v1 prefix, no exception handling, status as free text with no
-//        transition rules, cancel does not restore the slot or refund the payment.
+// SMELL: no /api/v1 prefix, status as free text with no transition rules,
+//        cancel does not restore the slot or refund the payment.
 @Tag(name = "Appointment Management")
 @RestController
 @RequiredArgsConstructor

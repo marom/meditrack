@@ -2,6 +2,7 @@ package com.marom.meditrack.service;
 
 import com.marom.meditrack.dto.AppointmentBookRequest;
 import com.marom.meditrack.dto.AppointmentResponse;
+import com.marom.meditrack.exception.BusinessRuleException;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.model.Appointment;
 import com.marom.meditrack.model.Doctor;
@@ -71,7 +72,7 @@ class AppointmentServiceTest {
     }
 
     @Test
-    void should_throwException_when_noSlotsAvailableOnBook() {
+    void should_throwBusinessRuleException_when_noSlotsAvailableOnBook() {
         // Arrange
         Patient patient = new Patient();
         patient.setId(1L);
@@ -87,7 +88,7 @@ class AppointmentServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> appointmentService.book(request))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("No slots available");
         verify(appointmentRepo, never()).save(any());
     }
@@ -119,6 +120,17 @@ class AppointmentServiceTest {
         assertThat(result.getScheduledDate()).isEqualTo(scheduled);
         assertThat(result.getTotalAmount()).isEqualTo(doctor.getConsultationFee());
         assertThat(result.getAppointmentNo()).startsWith("APT-");
+    }
+
+    @Test
+    void should_throwResourceNotFoundException_when_appointmentNotFoundOnFindById() {
+        // Arrange
+        when(appointmentRepo.findById(99L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> appointmentService.findById(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Appointment not found");
     }
 
     @Test

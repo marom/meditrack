@@ -3,6 +3,7 @@ package com.marom.meditrack.service;
 import com.marom.meditrack.dto.AppointmentBookRequest;
 import com.marom.meditrack.dto.AppointmentResponse;
 import com.marom.meditrack.dto.AppointmentServiceResponse;
+import com.marom.meditrack.exception.BusinessRuleException;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.model.Appointment;
 import com.marom.meditrack.model.Doctor;
@@ -19,8 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 // SMELL (still present, out of scope for this extraction): status as free
-// text, slot-capacity failure as generic RuntimeException, cancel does not
-// release the doctor's slot or refund the payment, findById returns null on miss.
+// text, cancel does not release the doctor's slot or refund the payment.
 @Service
 @RequiredArgsConstructor
 public class AppointmentService {
@@ -36,9 +36,9 @@ public class AppointmentService {
     }
 
     public AppointmentResponse findById(Long id) {
-        return appointmentRepo.findById(id)
-                .map(AppointmentService::toResponse)
-                .orElse(null);
+        Appointment a = appointmentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
+        return toResponse(a);
     }
 
     public AppointmentResponse book(AppointmentBookRequest request) {
@@ -50,7 +50,7 @@ public class AppointmentService {
         LocalDate scheduled = request.getScheduledDate();
         long booked = appointmentRepo.countByDoctorAndScheduledDate(doctor, scheduled);
         if (booked >= doctor.getDailySlotCapacity()) {
-            throw new RuntimeException("No slots available for this doctor on " + scheduled);
+            throw new BusinessRuleException("No slots available for this doctor on " + scheduled);
         }
 
         Appointment a = new Appointment();

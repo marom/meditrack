@@ -26,11 +26,10 @@ public class DoctorService {
                 .toList();
     }
 
-    // SMELL: returns null on miss (preserved from the pre-DTO controller behavior).
     public DoctorResponse findById(Long id) {
-        return doctorRepo.findById(id)
-                .map(DoctorService::toResponse)
-                .orElse(null);
+        Doctor doctor = doctorRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + id));
+        return toResponse(doctor);
     }
 
     public DoctorResponse create(DoctorRequest request) {
