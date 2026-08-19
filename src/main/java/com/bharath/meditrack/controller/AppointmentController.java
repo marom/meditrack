@@ -3,6 +3,7 @@ package com.bharath.meditrack.controller;
 import com.bharath.meditrack.model.Appointment;
 import com.bharath.meditrack.repo.AppointmentRepository;
 import com.bharath.meditrack.service.AppointmentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,7 @@ import java.util.List;
 // SMELL: still no DTOs, no exception handling, status as free text with no
 //        transition rules, cancel does not restore the slot or refund the payment.
 //        Booking/cancel business logic now lives in AppointmentService.
+@Tag(name = "Appointment Management")
 @RestController
 public class AppointmentController {
 

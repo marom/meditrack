@@ -4,6 +4,7 @@ import com.bharath.meditrack.model.Doctor;
 import com.bharath.meditrack.model.Specialty;
 import com.bharath.meditrack.repo.DoctorRepository;
 import com.bharath.meditrack.repo.SpecialtyRepository;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,11 +21,13 @@ public class CatalogController {
     @Autowired
     private DoctorRepository doctorRepo;
 
+    @Operation(tags = "Specialty")
     @GetMapping("/specialties")
     public List<Specialty> allSpecialties() {
         return specialtyRepo.findAll();
     }
 
+    @Operation(tags = "Specialty")
     @PostMapping("/specialties")
     public Specialty createSpecialty(@RequestBody Specialty s) {
         s.setCreatedAt(LocalDateTime.now());
@@ -32,16 +35,19 @@ public class CatalogController {
         return specialtyRepo.save(s);
     }
 
+    @Operation(tags = "Doctor")
     @GetMapping("/doctors")
     public List<Doctor> allDoctors() {
         return doctorRepo.findAll();
     }
 
+    @Operation(tags = "Doctor")
     @GetMapping("/doctors/{id}")
     public Doctor getDoctor(@PathVariable Long id) {
         return doctorRepo.findById(id).orElse(null);   // SMELL: returns null on miss
     }
 
+    @Operation(tags = "Doctor")
     @PostMapping("/doctors")
     public Doctor createDoctor(@RequestBody Doctor d) {
         d.setCreatedAt(LocalDateTime.now());
