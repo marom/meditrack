@@ -14,9 +14,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-// SMELL (still present, out of scope for this extraction): money as double,
-// status as free text, slot-capacity failure as generic RuntimeException,
-// cancel does not release the doctor's slot or refund the payment.
+// SMELL (still present, out of scope for this extraction): status as free
+// text, slot-capacity failure as generic RuntimeException, cancel does not
+// release the doctor's slot or refund the payment.
 @Service
 @RequiredArgsConstructor
 public class AppointmentService {

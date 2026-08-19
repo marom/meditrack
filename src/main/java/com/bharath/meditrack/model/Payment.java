@@ -2,6 +2,7 @@ package com.bharath.meditrack.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -22,8 +23,7 @@ public class Payment {
     @Column(name = "payment_status")
     private String paymentStatus;
 
-    // SMELL: money as double.
-    private double amount;
+    private BigDecimal amount;
 
     private LocalDateTime createdAt;
 }

@@ -2,6 +2,7 @@ package com.bharath.meditrack.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,9 +34,8 @@ public class Appointment {
     @Column(name = "scheduled_date")
     private LocalDate scheduledDate;
 
-    // SMELL: money as double.
     @Column(name = "total_amount")
-    private double totalAmount;
+    private BigDecimal totalAmount;
 
     private String notes;
     private LocalDateTime createdAt;

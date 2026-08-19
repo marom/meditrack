@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -91,7 +92,7 @@ class AppointmentServiceTest {
         Doctor doctor = new Doctor();
         doctor.setId(2L);
         doctor.setDailySlotCapacity(5);
-        doctor.setConsultationFee(120.0);
+        doctor.setConsultationFee(new BigDecimal("120.00"));
         LocalDate scheduled = LocalDate.parse("2026-09-01");
         when(patientRepo.findById(1L)).thenReturn(Optional.of(patient));
         when(doctorRepo.findById(2L)).thenReturn(Optional.of(doctor));

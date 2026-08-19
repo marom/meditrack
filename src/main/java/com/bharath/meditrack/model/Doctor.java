@@ -2,6 +2,7 @@ package com.bharath.meditrack.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,9 +17,8 @@ public class Doctor {
     @Column(name = "license_no")
     private String licenseNo;
 
-    // SMELL: money as double instead of BigDecimal.
     @Column(name = "consultation_fee")
-    private double consultationFee;
+    private BigDecimal consultationFee;
 
     @Column(name = "daily_slot_capacity")
     private int dailySlotCapacity;

@@ -3,6 +3,7 @@ package com.bharath.meditrack.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 
 @Data
 @Entity
@@ -22,9 +23,8 @@ public class AppointmentService {
 
     private int quantity;
 
-    // SMELL: money as double.
     @Column(name = "unit_price")
-    private double unitPrice;
+    private BigDecimal unitPrice;
 
-    private double subtotal;
+    private BigDecimal subtotal;
 }
