@@ -1,12 +1,12 @@
-package com.bharath.meditrack.service;
+package com.marom.meditrack.service;
 
-import com.bharath.meditrack.exception.ResourceNotFoundException;
-import com.bharath.meditrack.model.Appointment;
-import com.bharath.meditrack.model.Doctor;
-import com.bharath.meditrack.model.Patient;
-import com.bharath.meditrack.repo.AppointmentRepository;
-import com.bharath.meditrack.repo.DoctorRepository;
-import com.bharath.meditrack.repo.PatientRepository;
+import com.marom.meditrack.exception.ResourceNotFoundException;
+import com.marom.meditrack.model.Appointment;
+import com.marom.meditrack.model.Doctor;
+import com.marom.meditrack.model.Patient;
+import com.marom.meditrack.repo.AppointmentRepository;
+import com.marom.meditrack.repo.DoctorRepository;
+import com.marom.meditrack.repo.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

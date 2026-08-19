@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.bharath</groupId>
+    <groupId>com.marom</groupId>
     <artifactId>meditrack</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>meditrack</name>

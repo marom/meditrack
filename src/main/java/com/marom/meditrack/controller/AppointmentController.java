@@ -1,8 +1,8 @@
-package com.bharath.meditrack.controller;
+package com.marom.meditrack.controller;
 
-import com.bharath.meditrack.model.Appointment;
-import com.bharath.meditrack.repo.AppointmentRepository;
-import com.bharath.meditrack.service.AppointmentService;
+import com.marom.meditrack.model.Appointment;
+import com.marom.meditrack.repo.AppointmentRepository;
+import com.marom.meditrack.service.AppointmentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

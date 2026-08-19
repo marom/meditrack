@@ -76,7 +76,7 @@ POST /appointments/1/cancel
 
 ## Architecture
 
-Package root: `com.bharath.meditrack`.
+Package root: `com.marom.meditrack`.
 
 - `controller/` — `AppointmentController`, `CatalogController` (specialties + doctors, two resources in one controller), `PatientController`. **There is no service layer** — all business logic (booking rules, slot-capacity checks, appointment-number generation, status transitions) lives directly in the controllers, which also inject repositories with field-level `@Autowired` and return JPA entities straight out as HTTP responses (no DTOs).
 - `model/` — JPA entities (`Appointment`, `AppointmentService`, `Doctor`, `Patient`, `Payment`, `Specialty`), all annotated `@Data @Entity`. Associations (`Doctor.specialty`, `Appointment.patient/doctor/services`, `Payment.appointment`) are all `FetchType.EAGER`.

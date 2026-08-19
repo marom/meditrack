@@ -1,4 +1,4 @@
-package com.bharath.meditrack.model;
+package com.marom.meditrack.model;
 
 import jakarta.persistence.*;
 import lombok.Data;

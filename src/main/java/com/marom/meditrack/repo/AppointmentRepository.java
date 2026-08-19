@@ -1,7 +1,7 @@
-package com.bharath.meditrack.repo;
+package com.marom.meditrack.repo;
 
-import com.bharath.meditrack.model.Appointment;
-import com.bharath.meditrack.model.Doctor;
+import com.marom.meditrack.model.Appointment;
+import com.marom.meditrack.model.Doctor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;

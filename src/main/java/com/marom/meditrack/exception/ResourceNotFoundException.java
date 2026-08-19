@@ -1,4 +1,4 @@
-package com.bharath.meditrack.exception;
+package com.marom.meditrack.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

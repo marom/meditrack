@@ -1,9 +1,9 @@
-package com.bharath.meditrack.controller;
+package com.marom.meditrack.controller;
 
-import com.bharath.meditrack.model.Doctor;
-import com.bharath.meditrack.model.Specialty;
-import com.bharath.meditrack.repo.DoctorRepository;
-import com.bharath.meditrack.repo.SpecialtyRepository;
+import com.marom.meditrack.model.Doctor;
+import com.marom.meditrack.model.Specialty;
+import com.marom.meditrack.repo.DoctorRepository;
+import com.marom.meditrack.repo.SpecialtyRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

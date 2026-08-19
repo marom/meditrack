@@ -1,4 +1,4 @@
-package com.bharath.meditrack;
+package com.marom.meditrack;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
