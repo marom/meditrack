@@ -1,30 +1,28 @@
 package com.marom.meditrack.controller;
 
-import com.marom.meditrack.model.Patient;
-import com.marom.meditrack.repo.PatientRepository;
+import com.marom.meditrack.dto.PatientRequest;
+import com.marom.meditrack.dto.PatientResponse;
+import com.marom.meditrack.service.PatientService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Tag(name = "Patient")
 @RestController
+@RequiredArgsConstructor
 public class PatientController {
 
-    @Autowired
-    private PatientRepository patientRepo;
+    private final PatientService patientService;
 
     @GetMapping("/patients")
-    public List<Patient> all() {
-        return patientRepo.findAll();
+    public List<PatientResponse> all() {
+        return patientService.findAll();
     }
 
-    // SMELL: no duplicate-email check, no validation, returns the entity directly.
     @PostMapping("/patients")
-    public Patient register(@RequestBody Patient p) {
-        p.setCreatedAt(LocalDateTime.now());
-        return patientRepo.save(p);
+    public PatientResponse register(@RequestBody PatientRequest request) {
+        return patientService.register(request);
     }
 }

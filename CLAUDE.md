@@ -70,7 +70,7 @@ MySQL, not embedded/in-memory. Before running the app, execute `db/meditrack_sch
 ```
 GET  /doctors
 GET  /patients
-POST /appointments/book?patientId=1&doctorId=1&date=2026-08-01
+POST /appointments/book   {"patientId":1,"doctorId":1,"scheduledDate":"2026-08-01"}
 POST /appointments/1/cancel
 ```
 

@@ -1,57 +1,53 @@
 package com.marom.meditrack.controller;
 
-import com.marom.meditrack.model.Doctor;
-import com.marom.meditrack.model.Specialty;
-import com.marom.meditrack.repo.DoctorRepository;
-import com.marom.meditrack.repo.SpecialtyRepository;
+import com.marom.meditrack.dto.DoctorRequest;
+import com.marom.meditrack.dto.DoctorResponse;
+import com.marom.meditrack.dto.SpecialtyRequest;
+import com.marom.meditrack.dto.SpecialtyResponse;
+import com.marom.meditrack.service.DoctorService;
+import com.marom.meditrack.service.SpecialtyService;
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-// SMELL: one controller for two resources, field injection, no /api/v1 prefix,
-//        returns entities directly (no DTOs), no validation, no error handling.
+// SMELL: one controller for two resources, no /api/v1 prefix, no validation,
+//        no error handling.
 @RestController
+@RequiredArgsConstructor
 public class CatalogController {
 
-    @Autowired
-    private SpecialtyRepository specialtyRepo;
-    @Autowired
-    private DoctorRepository doctorRepo;
+    private final SpecialtyService specialtyService;
+    private final DoctorService doctorService;
 
     @Operation(tags = "Specialty")
     @GetMapping("/specialties")
-    public List<Specialty> allSpecialties() {
-        return specialtyRepo.findAll();
+    public List<SpecialtyResponse> allSpecialties() {
+        return specialtyService.findAll();
     }
 
     @Operation(tags = "Specialty")
     @PostMapping("/specialties")
-    public Specialty createSpecialty(@RequestBody Specialty s) {
-        s.setCreatedAt(LocalDateTime.now());
-        s.setUpdatedAt(LocalDateTime.now());
-        return specialtyRepo.save(s);
+    public SpecialtyResponse createSpecialty(@RequestBody SpecialtyRequest request) {
+        return specialtyService.create(request);
     }
 
     @Operation(tags = "Doctor")
     @GetMapping("/doctors")
-    public List<Doctor> allDoctors() {
-        return doctorRepo.findAll();
+    public List<DoctorResponse> allDoctors() {
+        return doctorService.findAll();
     }
 
     @Operation(tags = "Doctor")
     @GetMapping("/doctors/{id}")
-    public Doctor getDoctor(@PathVariable Long id) {
-        return doctorRepo.findById(id).orElse(null);   // SMELL: returns null on miss
+    public DoctorResponse getDoctor(@PathVariable Long id) {
+        return doctorService.findById(id);   // SMELL: returns null on miss
     }
 
     @Operation(tags = "Doctor")
     @PostMapping("/doctors")
-    public Doctor createDoctor(@RequestBody Doctor d) {
-        d.setCreatedAt(LocalDateTime.now());
-        d.setUpdatedAt(LocalDateTime.now());
-        return doctorRepo.save(d);
+    public DoctorResponse createDoctor(@RequestBody DoctorRequest request) {
+        return doctorService.create(request);
     }
 }

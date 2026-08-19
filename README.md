@@ -10,7 +10,7 @@ use Claude Code to refactor it and then extend it.
 3. Try it:
    - `GET  http://localhost:8080/doctors`
    - `GET  http://localhost:8080/patients`
-   - `POST http://localhost:8080/appointments/book?patientId=1&doctorId=1&date=2026-08-01`
+   - `POST http://localhost:8080/appointments/book` with JSON body `{"patientId":1,"doctorId":1,"scheduledDate":"2026-08-01"}`
    - `POST http://localhost:8080/appointments/1/cancel`
 
 ## What's wrong with it (on purpose)

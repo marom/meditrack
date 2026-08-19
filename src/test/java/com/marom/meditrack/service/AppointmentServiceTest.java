@@ -1,5 +1,7 @@
 package com.marom.meditrack.service;
 
+import com.marom.meditrack.dto.AppointmentBookRequest;
+import com.marom.meditrack.dto.AppointmentResponse;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.model.Appointment;
 import com.marom.meditrack.model.Doctor;
@@ -41,9 +43,11 @@ class AppointmentServiceTest {
     void should_throwResourceNotFoundException_when_patientNotFoundOnBook() {
         // Arrange
         when(patientRepo.findById(1L)).thenReturn(Optional.empty());
+        AppointmentBookRequest request = AppointmentBookRequest.builder()
+                .patientId(1L).doctorId(2L).scheduledDate(LocalDate.parse("2026-09-01")).build();
 
         // Act & Assert
-        assertThatThrownBy(() -> appointmentService.book(1L, 2L, "2026-09-01"))
+        assertThatThrownBy(() -> appointmentService.book(request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Patient not found");
         verify(appointmentRepo, never()).save(any());
@@ -56,9 +60,11 @@ class AppointmentServiceTest {
         patient.setId(1L);
         when(patientRepo.findById(1L)).thenReturn(Optional.of(patient));
         when(doctorRepo.findById(2L)).thenReturn(Optional.empty());
+        AppointmentBookRequest request = AppointmentBookRequest.builder()
+                .patientId(1L).doctorId(2L).scheduledDate(LocalDate.parse("2026-09-01")).build();
 
         // Act & Assert
-        assertThatThrownBy(() -> appointmentService.book(1L, 2L, "2026-09-01"))
+        assertThatThrownBy(() -> appointmentService.book(request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Doctor not found");
         verify(appointmentRepo, never()).save(any());
@@ -76,9 +82,11 @@ class AppointmentServiceTest {
         when(patientRepo.findById(1L)).thenReturn(Optional.of(patient));
         when(doctorRepo.findById(2L)).thenReturn(Optional.of(doctor));
         when(appointmentRepo.countByDoctorAndScheduledDate(doctor, scheduled)).thenReturn(1L);
+        AppointmentBookRequest request = AppointmentBookRequest.builder()
+                .patientId(1L).doctorId(2L).scheduledDate(scheduled).build();
 
         // Act & Assert
-        assertThatThrownBy(() -> appointmentService.book(1L, 2L, "2026-09-01"))
+        assertThatThrownBy(() -> appointmentService.book(request))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("No slots available");
         verify(appointmentRepo, never()).save(any());
@@ -98,14 +106,16 @@ class AppointmentServiceTest {
         when(doctorRepo.findById(2L)).thenReturn(Optional.of(doctor));
         when(appointmentRepo.countByDoctorAndScheduledDate(doctor, scheduled)).thenReturn(0L);
         when(appointmentRepo.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        AppointmentBookRequest request = AppointmentBookRequest.builder()
+                .patientId(1L).doctorId(2L).scheduledDate(scheduled).build();
 
         // Act
-        Appointment result = appointmentService.book(1L, 2L, "2026-09-01");
+        AppointmentResponse result = appointmentService.book(request);
 
         // Assert
         assertThat(result.getStatus()).isEqualTo("REQUESTED");
-        assertThat(result.getPatient()).isEqualTo(patient);
-        assertThat(result.getDoctor()).isEqualTo(doctor);
+        assertThat(result.getPatient().getId()).isEqualTo(patient.getId());
+        assertThat(result.getDoctor().getId()).isEqualTo(doctor.getId());
         assertThat(result.getScheduledDate()).isEqualTo(scheduled);
         assertThat(result.getTotalAmount()).isEqualTo(doctor.getConsultationFee());
         assertThat(result.getAppointmentNo()).startsWith("APT-");
@@ -133,7 +143,7 @@ class AppointmentServiceTest {
         when(appointmentRepo.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Appointment result = appointmentService.cancel(5L);
+        AppointmentResponse result = appointmentService.cancel(5L);
 
         // Assert
         assertThat(result.getStatus()).isEqualTo("CANCELLED");

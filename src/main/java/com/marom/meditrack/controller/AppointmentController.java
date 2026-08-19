@@ -1,45 +1,40 @@
 package com.marom.meditrack.controller;
 
-import com.marom.meditrack.model.Appointment;
-import com.marom.meditrack.repo.AppointmentRepository;
+import com.marom.meditrack.dto.AppointmentBookRequest;
+import com.marom.meditrack.dto.AppointmentResponse;
 import com.marom.meditrack.service.AppointmentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// SMELL: still no DTOs, no exception handling, status as free text with no
+// SMELL: no /api/v1 prefix, no exception handling, status as free text with no
 //        transition rules, cancel does not restore the slot or refund the payment.
-//        Booking/cancel business logic now lives in AppointmentService.
 @Tag(name = "Appointment Management")
 @RestController
+@RequiredArgsConstructor
 public class AppointmentController {
 
-    @Autowired
-    private AppointmentRepository appointmentRepo;
-    @Autowired
-    private AppointmentService appointmentService;
+    private final AppointmentService appointmentService;
 
     @GetMapping("/appointments")
-    public List<Appointment> all() {
-        return appointmentRepo.findAll();
+    public List<AppointmentResponse> all() {
+        return appointmentService.findAll();
     }
 
     @GetMapping("/appointments/{id}")
-    public Appointment get(@PathVariable Long id) {
-        return appointmentRepo.findById(id).orElse(null);
+    public AppointmentResponse get(@PathVariable Long id) {
+        return appointmentService.findById(id);
     }
 
     @PostMapping("/appointments/book")
-    public Appointment book(@RequestParam Long patientId,
-                            @RequestParam Long doctorId,
-                            @RequestParam String date) {
-        return appointmentService.book(patientId, doctorId, date);
+    public AppointmentResponse book(@RequestBody AppointmentBookRequest request) {
+        return appointmentService.book(request);
     }
 
     @PostMapping("/appointments/{id}/cancel")
-    public Appointment cancel(@PathVariable Long id) {
+    public AppointmentResponse cancel(@PathVariable Long id) {
         return appointmentService.cancel(id);
     }
 }
