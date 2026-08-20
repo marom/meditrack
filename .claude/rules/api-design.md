@@ -11,5 +11,5 @@
 
 ## Error Responses
 - Validation errors → `400 Bad Request`, listing all field errors.
-- Business rule violations → `422 Unprocessable Entity` (not 400).
+- Business rule violations → `400 Bad Request`.
 - Duplicate resource → `409 Conflict`.
