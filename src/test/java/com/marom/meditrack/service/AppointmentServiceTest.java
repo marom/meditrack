@@ -161,4 +161,33 @@ class AppointmentServiceTest {
         assertThat(result.getStatus()).isEqualTo("CANCELLED");
         assertThat(result.getUpdatedAt()).isNotNull();
     }
+
+    @Test
+    void should_throwResourceNotFoundException_when_appointmentNotFoundOnComplete() {
+        // Arrange
+        when(appointmentRepo.findById(99L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> appointmentService.complete(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Appointment not found");
+        verify(appointmentRepo, never()).save(any());
+    }
+
+    @Test
+    void should_setStatusCompleted_when_completingExistingAppointment() {
+        // Arrange
+        Appointment appointment = new Appointment();
+        appointment.setAppointmentId(5L);
+        appointment.setStatus("REQUESTED");
+        when(appointmentRepo.findById(5L)).thenReturn(Optional.of(appointment));
+        when(appointmentRepo.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        AppointmentResponse result = appointmentService.complete(5L);
+
+        // Assert
+        assertThat(result.getStatus()).isEqualTo("COMPLETED");
+        assertThat(result.getUpdatedAt()).isNotNull();
+    }
 }

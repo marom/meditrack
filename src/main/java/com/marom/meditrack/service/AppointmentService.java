@@ -73,6 +73,14 @@ public class AppointmentService {
         return toResponse(appointmentRepo.save(a));
     }
 
+    public AppointmentResponse complete(Long id) {
+        Appointment a = appointmentRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + id));
+        a.setStatus("COMPLETED");
+        a.setUpdatedAt(LocalDateTime.now());
+        return toResponse(appointmentRepo.save(a));
+    }
+
     static AppointmentResponse toResponse(Appointment a) {
         return AppointmentResponse.builder()
                 .appointmentId(a.getAppointmentId())

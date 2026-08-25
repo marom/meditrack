@@ -37,4 +37,11 @@ public class AppointmentController {
     public AppointmentResponse cancel(@PathVariable Long id) {
         return appointmentService.cancel(id);
     }
+
+    // New endpoint only — no class-level @RequestMapping added, to avoid
+    // prefixing the pre-existing /appointments endpoints above (out of scope).
+    @PostMapping("/api/v1/appointments/{id}/complete")
+    public AppointmentResponse complete(@PathVariable Long id) {
+        return appointmentService.complete(id);
+    }
 }

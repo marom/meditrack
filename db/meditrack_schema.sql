@@ -90,6 +90,20 @@ CREATE TABLE payments (
     CONSTRAINT fk_payments_appointment FOREIGN KEY (appointment_id) REFERENCES appointments (appointment_id)
 );
 
+-- feedback  (one row per patient+appointment; only for COMPLETED appointments)
+CREATE TABLE feedback (
+    id             BIGINT      NOT NULL AUTO_INCREMENT,
+    patient_id     BIGINT      NOT NULL,
+    appointment_id BIGINT      NOT NULL,
+    rating         TINYINT     NOT NULL,
+    comment        TEXT,
+    created_at     DATETIME,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_feedback_patient_appointment (patient_id, appointment_id),
+    CONSTRAINT fk_feedback_patient     FOREIGN KEY (patient_id)     REFERENCES patients     (id),
+    CONSTRAINT fk_feedback_appointment FOREIGN KEY (appointment_id) REFERENCES appointments (appointment_id)
+);
+
 -- indexes
 CREATE INDEX idx_doctors_specialty     ON doctors             (specialty_id);
 CREATE INDEX idx_doctors_active        ON doctors             (active);
@@ -98,6 +112,7 @@ CREATE INDEX idx_appointments_doctor   ON appointments        (doctor_id);
 CREATE INDEX idx_appointments_date     ON appointments        (scheduled_date);
 CREATE INDEX idx_appointments_status   ON appointments        (status);
 CREATE INDEX idx_appt_services_appt    ON appointment_services(appointment_id);
+CREATE INDEX idx_feedback_appointment  ON feedback             (appointment_id);
 
 -- ---------------------------------------------------------------------------
 -- Seed data (reference data + patients only).
