@@ -69,25 +69,27 @@ class FeedbackControllerIT extends AbstractIntegrationTest {
 
     @ParameterizedTest
     @ValueSource(ints = {0, 6})
-    void should_return400_when_ratingIsOutOfRange(int rating) throws Exception {
+    void should_return400WithFieldError_when_ratingIsOutOfRange(int rating) throws Exception {
         // Arrange
         long appointmentId = completedAppointment(1L, 1L, "2026-09-13");
 
-        // Act & Assert
+        // Act & Assert — @Min/@Max on the request DTO reject it.
         submitFeedback(1L, appointmentId, rating, "x")
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Rating must be between 1 and 5"));
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.rating").exists());
     }
 
     @Test
-    void should_return400_when_ratingIsMissing() throws Exception {
+    void should_return400WithFieldError_when_ratingIsMissing() throws Exception {
         // Arrange
         long appointmentId = completedAppointment(1L, 1L, "2026-09-14");
 
         // Act & Assert
         submitFeedback(1L, appointmentId, null, "no rating")
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Rating must be between 1 and 5"));
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.rating").exists());
     }
 
     @Test

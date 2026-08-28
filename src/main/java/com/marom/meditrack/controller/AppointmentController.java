@@ -4,13 +4,12 @@ import com.marom.meditrack.dto.AppointmentBookRequest;
 import com.marom.meditrack.dto.AppointmentResponse;
 import com.marom.meditrack.service.AppointmentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// SMELL: status as free text with no transition rules,
-//        cancel does not restore the slot or refund the payment.
 @Tag(name = "Appointment Management")
 @RestController
 @RequiredArgsConstructor
@@ -30,7 +29,7 @@ public class AppointmentController {
     }
 
     @PostMapping("/book")
-    public AppointmentResponse book(@RequestBody AppointmentBookRequest request) {
+    public AppointmentResponse book(@Valid @RequestBody AppointmentBookRequest request) {
         return appointmentService.book(request);
     }
 

@@ -1,11 +1,20 @@
 package com.marom.meditrack.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "payments")
 public class Payment {
@@ -20,8 +29,9 @@ public class Payment {
     @Column(name = "payment_method")
     private String paymentMethod;
 
-    @Column(name = "payment_status")
-    private String paymentStatus;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 20, nullable = false)
+    private PaymentStatus paymentStatus;
 
     private BigDecimal amount;
 

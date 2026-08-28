@@ -2,6 +2,7 @@ package com.marom.meditrack.service;
 
 import com.marom.meditrack.dto.DoctorRequest;
 import com.marom.meditrack.dto.DoctorResponse;
+import com.marom.meditrack.exception.DuplicateResourceException;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.model.Doctor;
 import com.marom.meditrack.model.Specialty;
@@ -9,23 +10,27 @@ import com.marom.meditrack.repo.DoctorRepository;
 import com.marom.meditrack.repo.SpecialtyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class DoctorService {
 
     private final DoctorRepository doctorRepo;
     private final SpecialtyRepository specialtyRepo;
 
+    @Transactional(readOnly = true)
     public List<DoctorResponse> findAll() {
         return doctorRepo.findAll().stream()
                 .map(DoctorService::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public DoctorResponse findById(Long id) {
         Doctor doctor = doctorRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + id));
@@ -35,6 +40,10 @@ public class DoctorService {
     public DoctorResponse create(DoctorRequest request) {
         Specialty specialty = specialtyRepo.findById(request.getSpecialtyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Specialty not found: " + request.getSpecialtyId()));
+
+        if (doctorRepo.existsByLicenseNo(request.getLicenseNo())) {
+            throw new DuplicateResourceException("Doctor already exists with license: " + request.getLicenseNo());
+        }
 
         Doctor d = new Doctor();
         d.setName(request.getName());

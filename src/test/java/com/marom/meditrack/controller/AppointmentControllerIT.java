@@ -40,6 +40,8 @@ class AppointmentControllerIT extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.doctor.id").value(1))
                 .andExpect(jsonPath("$.scheduledDate").value("2026-09-01"))
                 .andExpect(jsonPath("$.totalAmount").value(600.00))
+                .andExpect(jsonPath("$.payment.paymentStatus").value("PENDING"))
+                .andExpect(jsonPath("$.payment.amount").value(600.00))
                 .andExpect(jsonPath("$.services").isArray())
                 .andExpect(jsonPath("$.services").isEmpty());
     }
@@ -93,17 +95,18 @@ class AppointmentControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void should_return500_when_bookingRequestOmitsPatientId() throws Exception {
-        // Arrange — no validation layer: a null id reaches the repository.
+    void should_return400WithFieldError_when_bookingRequestOmitsPatientId() throws Exception {
+        // Arrange — @Valid rejects the missing id before it reaches the service.
         String body = "{\"doctorId\":1,\"scheduledDate\":\"2026-09-01\"}";
 
         // Act & Assert
         mockMvc.perform(post("/api/v1/appointments/book")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.patientId").exists());
     }
 
     @Test
@@ -139,7 +142,7 @@ class AppointmentControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void should_return200WithCancelledStatus_when_cancellingAnAppointment() throws Exception {
+    void should_cancelAndRefundThePayment_when_cancellingAnAppointment() throws Exception {
         // Arrange
         long id = book(1L, 1L, "2026-09-05");
 
@@ -147,7 +150,8 @@ class AppointmentControllerIT extends AbstractIntegrationTest {
         mockMvc.perform(post("/api/v1/appointments/{id}/cancel", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.updatedAt", notNullValue()));
+                .andExpect(jsonPath("$.updatedAt", notNullValue()))
+                .andExpect(jsonPath("$.payment.paymentStatus").value("REFUNDED"));
     }
 
     @Test
@@ -159,14 +163,57 @@ class AppointmentControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void should_return200WithCompletedStatus_when_completingAnAppointment() throws Exception {
+    void should_completeAndSettleThePayment_when_completingAnAppointment() throws Exception {
         // Arrange
         long id = book(1L, 1L, "2026-09-06");
 
         // Act & Assert
         mockMvc.perform(post("/api/v1/appointments/{id}/complete", id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("COMPLETED"));
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.payment.paymentStatus").value("PAID"));
+    }
+
+    @Test
+    void should_return400_when_cancellingAnAlreadyCompletedAppointment() throws Exception {
+        // Arrange
+        long id = book(1L, 1L, "2026-09-07");
+        mockMvc.perform(post("/api/v1/appointments/{id}/complete", id)).andExpect(status().isOk());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/appointments/{id}/cancel", id))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message", startsWith("Cannot move appointment")));
+    }
+
+    @Test
+    void should_return400_when_completingAnAlreadyCancelledAppointment() throws Exception {
+        // Arrange
+        long id = book(1L, 1L, "2026-09-08");
+        mockMvc.perform(post("/api/v1/appointments/{id}/cancel", id)).andExpect(status().isOk());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/appointments/{id}/complete", id))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", startsWith("Cannot move appointment")));
+    }
+
+    @Test
+    void should_freeTheSlot_when_aBookedAppointmentIsCancelled() throws Exception {
+        // Arrange — doctor 5 has daily_slot_capacity = 5; fill the day, then cancel one.
+        long firstId = book(1L, 5L, "2026-09-09");
+        for (int i = 0; i < 4; i++) {
+            book(1L, 5L, "2026-09-09");
+        }
+        mockMvc.perform(post("/api/v1/appointments/{id}/cancel", firstId)).andExpect(status().isOk());
+
+        // Act & Assert — the freed slot lets one more booking through.
+        mockMvc.perform(post("/api/v1/appointments/book")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(bookRequest(1L, 5L, "2026-09-09")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REQUESTED"));
     }
 
     private String bookRequest(Long patientId, Long doctorId, String scheduledDate) throws Exception {

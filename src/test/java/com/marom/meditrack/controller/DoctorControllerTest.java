@@ -2,11 +2,9 @@ package com.marom.meditrack.controller;
 
 import com.marom.meditrack.dto.DoctorRequest;
 import com.marom.meditrack.dto.DoctorResponse;
-import com.marom.meditrack.dto.SpecialtyRequest;
 import com.marom.meditrack.dto.SpecialtyResponse;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.service.DoctorService;
-import com.marom.meditrack.service.SpecialtyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -19,61 +17,29 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CatalogController.class)
-class CatalogControllerTest {
+@WebMvcTest(DoctorController.class)
+class DoctorControllerTest {
 
     private final MockMvc mockMvc;
     private final ObjectMapper objectMapper;
 
     @MockitoBean
-    private SpecialtyService specialtyService;
-    @MockitoBean
     private DoctorService doctorService;
 
-    CatalogControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+    DoctorControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.objectMapper = objectMapper;
     }
 
     @Test
-    void should_return200WithAllSpecialties_when_listingSpecialties() throws Exception {
-        // Arrange
-        given(specialtyService.findAll()).willReturn(List.of(
-                SpecialtyResponse.builder().id(1L).name("Cardiology").slug("cardiology").build()));
-
-        // Act & Assert
-        mockMvc.perform(get("/api/v1/specialties"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].name").value("Cardiology"));
-    }
-
-    @Test
-    void should_return200WithCreatedSpecialty_when_creatingSpecialty() throws Exception {
-        // Arrange
-        given(specialtyService.create(any(SpecialtyRequest.class))).willReturn(
-                SpecialtyResponse.builder().id(9L).name("Neurology").slug("neurology").build());
-        String body = objectMapper.writeValueAsString(SpecialtyRequest.builder()
-                .name("Neurology").slug("neurology").description("Brain").build());
-
-        // Act & Assert
-        mockMvc.perform(post("/api/v1/specialties")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(9))
-                .andExpect(jsonPath("$.name").value("Neurology"));
-        verify(specialtyService).create(any(SpecialtyRequest.class));
-    }
-
-    @Test
-    void should_return200WithAllDoctors_when_listingDoctors() throws Exception {
+    void should_return200WithAllDoctors_when_listing() throws Exception {
         // Arrange
         given(doctorService.findAll()).willReturn(List.of(sampleDoctor()));
 
@@ -82,6 +48,18 @@ class CatalogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("Dr. Asha Rao"));
+    }
+
+    @Test
+    void should_return200WithDoctor_when_gettingExistingDoctorById() throws Exception {
+        // Arrange
+        given(doctorService.findById(1L)).willReturn(sampleDoctor());
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/doctors/{id}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Dr. Asha Rao"));
     }
 
     @Test
@@ -96,7 +74,7 @@ class CatalogControllerTest {
     }
 
     @Test
-    void should_return200WithCreatedDoctor_when_creatingDoctor() throws Exception {
+    void should_return200WithCreatedDoctor_when_creating() throws Exception {
         // Arrange
         given(doctorService.create(any(DoctorRequest.class))).willReturn(sampleDoctor());
         String body = objectMapper.writeValueAsString(DoctorRequest.builder()
@@ -115,7 +93,7 @@ class CatalogControllerTest {
     }
 
     @Test
-    void should_return404_when_creatingDoctorForUnknownSpecialty() throws Exception {
+    void should_return404_when_creatingForUnknownSpecialty() throws Exception {
         // Arrange
         given(doctorService.create(any(DoctorRequest.class)))
                 .willThrow(new ResourceNotFoundException("Specialty not found: 999"));
@@ -129,6 +107,29 @@ class CatalogControllerTest {
                         .content(body))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Specialty not found: 999"));
+    }
+
+    @Test
+    void should_return400WithFieldErrors_when_creatingWithBlankNameAndNonPositiveFee() throws Exception {
+        // Arrange
+        String body = objectMapper.writeValueAsString(DoctorRequest.builder()
+                .name("  ")
+                .licenseNo("LIC-X")
+                .consultationFee(new BigDecimal("-1.00"))
+                .dailySlotCapacity(1)
+                .active(true)
+                .specialtyId(1L)
+                .build());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/doctors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.name").exists())
+                .andExpect(jsonPath("$.fieldErrors.consultationFee").exists());
+        verify(doctorService, never()).create(any());
     }
 
     private DoctorResponse sampleDoctor() {

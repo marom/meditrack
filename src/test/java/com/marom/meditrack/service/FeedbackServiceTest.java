@@ -7,6 +7,7 @@ import com.marom.meditrack.exception.BusinessRuleException;
 import com.marom.meditrack.exception.DuplicateResourceException;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.model.Appointment;
+import com.marom.meditrack.model.AppointmentStatus;
 import com.marom.meditrack.model.Doctor;
 import com.marom.meditrack.model.Feedback;
 import com.marom.meditrack.model.Patient;
@@ -49,7 +50,7 @@ class FeedbackServiceTest {
         patient.setId(patientId);
         Appointment appointment = new Appointment();
         appointment.setAppointmentId(appointmentId);
-        appointment.setStatus("COMPLETED");
+        appointment.setStatus(AppointmentStatus.COMPLETED);
         appointment.setPatient(patient);
         return appointment;
     }
@@ -72,7 +73,7 @@ class FeedbackServiceTest {
         // Arrange
         Appointment appointment = new Appointment();
         appointment.setAppointmentId(1L);
-        appointment.setStatus("REQUESTED");
+        appointment.setStatus(AppointmentStatus.REQUESTED);
         when(appointmentRepo.findById(1L)).thenReturn(Optional.of(appointment));
         FeedbackRequest request = FeedbackRequest.builder().patientId(1L).appointmentId(1L).rating(5).build();
 

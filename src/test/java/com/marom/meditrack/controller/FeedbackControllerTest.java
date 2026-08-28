@@ -18,6 +18,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -64,14 +65,28 @@ class FeedbackControllerTest {
     void should_return400_when_submitThrowsBusinessRule() throws Exception {
         // Arrange
         given(feedbackService.submit(any(FeedbackRequest.class)))
-                .willThrow(new BusinessRuleException("Rating must be between 1 and 5"));
+                .willThrow(new BusinessRuleException("Feedback can only be submitted for a COMPLETED appointment"));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/feedback")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(feedbackBody(4)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Feedback can only be submitted for a COMPLETED appointment"));
+    }
+
+    @Test
+    void should_return400WithFieldError_when_ratingIsOutOfRange() throws Exception {
+        // Arrange — rating 9 fails @Max(5); the service is never called.
 
         // Act & Assert
         mockMvc.perform(post("/api/v1/feedback")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(feedbackBody(9)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Rating must be between 1 and 5"));
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.rating").exists());
+        verify(feedbackService, never()).submit(any());
     }
 
     @Test

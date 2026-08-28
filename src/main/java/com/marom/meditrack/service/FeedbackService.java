@@ -7,6 +7,7 @@ import com.marom.meditrack.exception.BusinessRuleException;
 import com.marom.meditrack.exception.DuplicateResourceException;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.model.Appointment;
+import com.marom.meditrack.model.AppointmentStatus;
 import com.marom.meditrack.model.Doctor;
 import com.marom.meditrack.model.Feedback;
 import com.marom.meditrack.model.Patient;
@@ -16,11 +17,13 @@ import com.marom.meditrack.repo.FeedbackRepository;
 import com.marom.meditrack.repo.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepo;
@@ -32,7 +35,7 @@ public class FeedbackService {
         Appointment appointment = appointmentRepo.findById(request.getAppointmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + request.getAppointmentId()));
 
-        if (!"COMPLETED".equals(appointment.getStatus())) {
+        if (appointment.getStatus() != AppointmentStatus.COMPLETED) {
             throw new BusinessRuleException("Feedback can only be submitted for a COMPLETED appointment");
         }
 
@@ -61,6 +64,7 @@ public class FeedbackService {
         return toResponse(feedbackRepo.save(f));
     }
 
+    @Transactional(readOnly = true)
     public DoctorAverageRatingResponse getAverageRatingForDoctor(Long doctorId) {
         Doctor doctor = doctorRepo.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found: " + doctorId));

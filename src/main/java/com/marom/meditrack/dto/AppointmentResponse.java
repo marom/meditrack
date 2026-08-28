@@ -1,5 +1,6 @@
 package com.marom.meditrack.dto;
 
+import com.marom.meditrack.model.AppointmentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,11 +20,12 @@ public class AppointmentResponse {
     private String appointmentNo;
     private PatientResponse patient;
     private DoctorResponse doctor;
-    private String status;
+    private AppointmentStatus status;
     private LocalDate scheduledDate;
     private BigDecimal totalAmount;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private PaymentResponse payment;
     private List<AppointmentServiceResponse> services;
 }
