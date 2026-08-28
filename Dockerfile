@@ -4,7 +4,7 @@
 # Build stage — compile and package the app with a full JDK + Maven.
 # No Maven wrapper is bundled, so use the maven image.
 # ---------------------------------------------------------------------------
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM docker.io/library/maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
 
 # Resolve dependencies first so this layer is cached until pom.xml changes.
@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -B clean package -DskipTests
 # ---------------------------------------------------------------------------
 # Runtime stage — slim JRE, non-root user, just the jar.
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:21-jre AS runtime
+FROM docker.io/library/eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 
 RUN groupadd --system spring && useradd --system --gid spring spring
