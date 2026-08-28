@@ -12,9 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-// SMELL: one controller for two resources, no /api/v1 prefix, no validation.
+// SMELL: one controller for two resources, no validation.
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class CatalogController {
 
     private final SpecialtyService specialtyService;

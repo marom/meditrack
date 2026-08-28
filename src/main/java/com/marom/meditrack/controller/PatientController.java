@@ -12,16 +12,17 @@ import java.util.List;
 @Tag(name = "Patient")
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/patients")
 public class PatientController {
 
     private final PatientService patientService;
 
-    @GetMapping("/patients")
+    @GetMapping
     public List<PatientResponse> all() {
         return patientService.findAll();
     }
 
-    @PostMapping("/patients")
+    @PostMapping
     public PatientResponse register(@RequestBody PatientRequest request) {
         return patientService.register(request);
     }

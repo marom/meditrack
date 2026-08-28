@@ -8,10 +8,10 @@ use Claude Code to refactor it and then extend it.
 1. Run `db/meditrack_schema.sql` in MySQL Workbench (creates `meditrack_db` + seed data).
 2. Run it from your IDE (Spring Boot Extension Pack / IntelliJ), or `mvn spring-boot:run`. (No Maven wrapper is bundled — your first refactor task can be to add one with `mvn -N wrapper:wrapper`.)
 3. Try it:
-   - `GET  http://localhost:8080/doctors`
-   - `GET  http://localhost:8080/patients`
-   - `POST http://localhost:8080/appointments/book` with JSON body `{"patientId":1,"doctorId":1,"scheduledDate":"2026-08-01"}`
-   - `POST http://localhost:8080/appointments/1/cancel`
+   - `GET  http://localhost:8080/api/v1/doctors`
+   - `GET  http://localhost:8080/api/v1/patients`
+   - `POST http://localhost:8080/api/v1/appointments/book` with JSON body `{"patientId":1,"doctorId":1,"scheduledDate":"2026-08-01"}`
+   - `POST http://localhost:8080/api/v1/appointments/1/cancel`
 
 ## What's wrong with it (on purpose)
 - Money stored as `double` instead of `BigDecimal`
