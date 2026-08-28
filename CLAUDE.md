@@ -68,10 +68,10 @@ MySQL, not embedded/in-memory. Before running the app, execute `db/meditrack_sch
 ### Manual smoke test
 
 ```
-GET  /doctors
-GET  /patients
-POST /appointments/book   {"patientId":1,"doctorId":1,"scheduledDate":"2026-08-01"}
-POST /appointments/1/cancel
+GET  /api/v1/doctors
+GET  /api/v1/patients
+POST /api/v1/appointments/book   {"patientId":1,"doctorId":1,"scheduledDate":"2026-08-01"}
+POST /api/v1/appointments/1/cancel
 ```
 
 ## Architecture
