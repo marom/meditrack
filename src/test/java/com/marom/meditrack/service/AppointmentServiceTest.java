@@ -5,8 +5,11 @@ import com.marom.meditrack.dto.AppointmentResponse;
 import com.marom.meditrack.exception.BusinessRuleException;
 import com.marom.meditrack.exception.ResourceNotFoundException;
 import com.marom.meditrack.model.Appointment;
+import com.marom.meditrack.model.AppointmentStatus;
 import com.marom.meditrack.model.Doctor;
 import com.marom.meditrack.model.Patient;
+import com.marom.meditrack.model.Payment;
+import com.marom.meditrack.model.PaymentStatus;
 import com.marom.meditrack.repo.AppointmentRepository;
 import com.marom.meditrack.repo.DoctorRepository;
 import com.marom.meditrack.repo.PatientRepository;
@@ -44,8 +47,7 @@ class AppointmentServiceTest {
     void should_throwResourceNotFoundException_when_patientNotFoundOnBook() {
         // Arrange
         when(patientRepo.findById(1L)).thenReturn(Optional.empty());
-        AppointmentBookRequest request = AppointmentBookRequest.builder()
-                .patientId(1L).doctorId(2L).scheduledDate(LocalDate.parse("2026-09-01")).build();
+        AppointmentBookRequest request = bookRequest();
 
         // Act & Assert
         assertThatThrownBy(() -> appointmentService.book(request))
@@ -57,12 +59,9 @@ class AppointmentServiceTest {
     @Test
     void should_throwResourceNotFoundException_when_doctorNotFoundOnBook() {
         // Arrange
-        Patient patient = new Patient();
-        patient.setId(1L);
-        when(patientRepo.findById(1L)).thenReturn(Optional.of(patient));
+        when(patientRepo.findById(1L)).thenReturn(Optional.of(patient(1L)));
         when(doctorRepo.findById(2L)).thenReturn(Optional.empty());
-        AppointmentBookRequest request = AppointmentBookRequest.builder()
-                .patientId(1L).doctorId(2L).scheduledDate(LocalDate.parse("2026-09-01")).build();
+        AppointmentBookRequest request = bookRequest();
 
         // Act & Assert
         assertThatThrownBy(() -> appointmentService.book(request))
@@ -74,52 +73,41 @@ class AppointmentServiceTest {
     @Test
     void should_throwBusinessRuleException_when_noSlotsAvailableOnBook() {
         // Arrange
-        Patient patient = new Patient();
-        patient.setId(1L);
-        Doctor doctor = new Doctor();
-        doctor.setId(2L);
-        doctor.setDailySlotCapacity(1);
+        Doctor doctor = doctor(2L, 1, new BigDecimal("120.00"));
         LocalDate scheduled = LocalDate.parse("2026-09-01");
-        when(patientRepo.findById(1L)).thenReturn(Optional.of(patient));
+        when(patientRepo.findById(1L)).thenReturn(Optional.of(patient(1L)));
         when(doctorRepo.findById(2L)).thenReturn(Optional.of(doctor));
-        when(appointmentRepo.countByDoctorAndScheduledDate(doctor, scheduled)).thenReturn(1L);
-        AppointmentBookRequest request = AppointmentBookRequest.builder()
-                .patientId(1L).doctorId(2L).scheduledDate(scheduled).build();
+        when(appointmentRepo.countByDoctorAndScheduledDateAndStatusNot(doctor, scheduled, AppointmentStatus.CANCELLED))
+                .thenReturn(1L);
 
         // Act & Assert
-        assertThatThrownBy(() -> appointmentService.book(request))
+        assertThatThrownBy(() -> appointmentService.book(bookRequest()))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("No slots available");
         verify(appointmentRepo, never()).save(any());
     }
 
     @Test
-    void should_saveRequestedAppointment_when_slotAvailableOnBook() {
+    void should_saveRequestedAppointmentWithPendingPayment_when_slotAvailableOnBook() {
         // Arrange
-        Patient patient = new Patient();
-        patient.setId(1L);
-        Doctor doctor = new Doctor();
-        doctor.setId(2L);
-        doctor.setDailySlotCapacity(5);
-        doctor.setConsultationFee(new BigDecimal("120.00"));
+        Doctor doctor = doctor(2L, 5, new BigDecimal("120.00"));
         LocalDate scheduled = LocalDate.parse("2026-09-01");
-        when(patientRepo.findById(1L)).thenReturn(Optional.of(patient));
+        when(patientRepo.findById(1L)).thenReturn(Optional.of(patient(1L)));
         when(doctorRepo.findById(2L)).thenReturn(Optional.of(doctor));
-        when(appointmentRepo.countByDoctorAndScheduledDate(doctor, scheduled)).thenReturn(0L);
+        when(appointmentRepo.countByDoctorAndScheduledDateAndStatusNot(doctor, scheduled, AppointmentStatus.CANCELLED))
+                .thenReturn(0L);
         when(appointmentRepo.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        AppointmentBookRequest request = AppointmentBookRequest.builder()
-                .patientId(1L).doctorId(2L).scheduledDate(scheduled).build();
 
         // Act
-        AppointmentResponse result = appointmentService.book(request);
+        AppointmentResponse result = appointmentService.book(bookRequest());
 
         // Assert
-        assertThat(result.getStatus()).isEqualTo("REQUESTED");
-        assertThat(result.getPatient().getId()).isEqualTo(patient.getId());
-        assertThat(result.getDoctor().getId()).isEqualTo(doctor.getId());
-        assertThat(result.getScheduledDate()).isEqualTo(scheduled);
-        assertThat(result.getTotalAmount()).isEqualTo(doctor.getConsultationFee());
+        assertThat(result.getStatus()).isEqualTo(AppointmentStatus.REQUESTED);
         assertThat(result.getAppointmentNo()).startsWith("APT-");
+        assertThat(result.getTotalAmount()).isEqualByComparingTo("120.00");
+        assertThat(result.getPayment()).isNotNull();
+        assertThat(result.getPayment().getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(result.getPayment().getAmount()).isEqualByComparingTo("120.00");
     }
 
     @Test
@@ -146,11 +134,10 @@ class AppointmentServiceTest {
     }
 
     @Test
-    void should_setStatusCancelled_when_cancellingExistingAppointment() {
+    void should_setStatusCancelledAndRefundPayment_when_cancellingRequestedAppointment() {
         // Arrange
-        Appointment appointment = new Appointment();
-        appointment.setAppointmentId(5L);
-        appointment.setStatus("REQUESTED");
+        Appointment appointment = requestedAppointment(5L);
+        Payment payment = appointment.getPayment();
         when(appointmentRepo.findById(5L)).thenReturn(Optional.of(appointment));
         when(appointmentRepo.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -158,8 +145,23 @@ class AppointmentServiceTest {
         AppointmentResponse result = appointmentService.cancel(5L);
 
         // Assert
-        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(result.getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
         assertThat(result.getUpdatedAt()).isNotNull();
+        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.REFUNDED);
+    }
+
+    @Test
+    void should_throwBusinessRuleException_when_cancellingAnAlreadyCompletedAppointment() {
+        // Arrange
+        Appointment appointment = requestedAppointment(5L);
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+        when(appointmentRepo.findById(5L)).thenReturn(Optional.of(appointment));
+
+        // Act & Assert
+        assertThatThrownBy(() -> appointmentService.cancel(5L))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("Cannot move appointment");
+        verify(appointmentRepo, never()).save(any());
     }
 
     @Test
@@ -175,11 +177,10 @@ class AppointmentServiceTest {
     }
 
     @Test
-    void should_setStatusCompleted_when_completingExistingAppointment() {
+    void should_setStatusCompletedAndMarkPaymentPaid_when_completingRequestedAppointment() {
         // Arrange
-        Appointment appointment = new Appointment();
-        appointment.setAppointmentId(5L);
-        appointment.setStatus("REQUESTED");
+        Appointment appointment = requestedAppointment(5L);
+        Payment payment = appointment.getPayment();
         when(appointmentRepo.findById(5L)).thenReturn(Optional.of(appointment));
         when(appointmentRepo.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -187,7 +188,52 @@ class AppointmentServiceTest {
         AppointmentResponse result = appointmentService.complete(5L);
 
         // Assert
-        assertThat(result.getStatus()).isEqualTo("COMPLETED");
-        assertThat(result.getUpdatedAt()).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(AppointmentStatus.COMPLETED);
+        assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
+    }
+
+    @Test
+    void should_throwBusinessRuleException_when_completingAnAlreadyCancelledAppointment() {
+        // Arrange
+        Appointment appointment = requestedAppointment(5L);
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        when(appointmentRepo.findById(5L)).thenReturn(Optional.of(appointment));
+
+        // Act & Assert
+        assertThatThrownBy(() -> appointmentService.complete(5L))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("Cannot move appointment");
+        verify(appointmentRepo, never()).save(any());
+    }
+
+    private AppointmentBookRequest bookRequest() {
+        return AppointmentBookRequest.builder()
+                .patientId(1L).doctorId(2L).scheduledDate(LocalDate.parse("2026-09-01")).build();
+    }
+
+    private Patient patient(Long id) {
+        Patient p = new Patient();
+        p.setId(id);
+        return p;
+    }
+
+    private Doctor doctor(Long id, int capacity, BigDecimal fee) {
+        Doctor d = new Doctor();
+        d.setId(id);
+        d.setDailySlotCapacity(capacity);
+        d.setConsultationFee(fee);
+        return d;
+    }
+
+    private Appointment requestedAppointment(Long id) {
+        Appointment a = new Appointment();
+        a.setAppointmentId(id);
+        a.setStatus(AppointmentStatus.REQUESTED);
+        Payment payment = new Payment();
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setAmount(new BigDecimal("120.00"));
+        payment.setAppointment(a);
+        a.setPayment(payment);
+        return a;
     }
 }

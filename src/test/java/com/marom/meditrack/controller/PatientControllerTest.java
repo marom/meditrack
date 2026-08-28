@@ -15,6 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -65,6 +66,26 @@ class PatientControllerTest {
                 .andExpect(jsonPath("$.id").value(4))
                 .andExpect(jsonPath("$.email").value("alice.wong@example.com"));
         verify(patientService).register(any(PatientRequest.class));
+    }
+
+    @Test
+    void should_return400WithFieldErrors_when_emailIsInvalidAndNameIsBlank() throws Exception {
+        // Arrange
+        String body = objectMapper.writeValueAsString(PatientRequest.builder()
+                .firstName("")
+                .lastName("Wong")
+                .email("not-an-email")
+                .build());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/patients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.email").exists())
+                .andExpect(jsonPath("$.fieldErrors.firstName").exists());
+        verify(patientService, never()).register(any());
     }
 
     @Test

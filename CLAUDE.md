@@ -63,7 +63,7 @@ All handled in `GlobalExceptionHandler`, returning `ErrorResponse` JSON:
 
 ### Database
 
-MariaDB, not embedded/in-memory. Before running the app, execute `db/meditrack_schema.sql` (e.g. `mariadb -u root -p < db/meditrack_schema.sql`). It drops and recreates `meditrack_db` from scratch and seeds `specialties`, `doctors`, and `patients`; appointments/services/payments are created only through the API. Connection settings (including a plaintext password) are in `src/main/resources/application.properties`; `spring.jpa.hibernate.ddl-auto=update` lets Hibernate mutate the schema at boot — one of the intentional smells.
+MariaDB, not embedded/in-memory. Before running the app, execute `db/meditrack_schema.sql` (e.g. `mariadb -u root -p < db/meditrack_schema.sql`). It drops and recreates `meditrack_db` from scratch and seeds `specialties`, `doctors`, and `patients`; appointments/services/payments are created only through the API. Connection settings come from the environment (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, with dev defaults) in `src/main/resources/application.properties`; `spring.jpa.hibernate.ddl-auto=validate` — `db/meditrack_schema.sql` is the single source of truth and Hibernate only validates the entities against it at boot (`SchemaValidationIT` guards this).
 
 ### Manual smoke test
 
@@ -78,6 +78,16 @@ POST /api/v1/appointments/1/cancel
 
 Package root: `com.marom.meditrack`.
 
+> **Note:** the bullets in this section and "Known smells" below describe the
+> *original* starter layout. The refactor is complete (see the Status box under
+> "Known smells"): there is now a `service/` layer, constructor injection, DTOs on
+> every endpoint, a `GlobalExceptionHandler`, status/payment enums, and
+> `ddl-auto=validate`. `AppointmentService.book`/`cancel`/`complete` — not the
+> controller — hold the booking, slot-capacity, numbering, transition and payment
+> logic. Controllers are one-per-resource: `AppointmentController`,
+> `SpecialtyController`, `DoctorController`, `PatientController`,
+> `FeedbackController` (the old combined `CatalogController` has been split).
+
 - `controller/` — `AppointmentController`, `CatalogController` (specialties + doctors, two resources in one controller), `PatientController`. **There is no service layer** — all business logic (booking rules, slot-capacity checks, appointment-number generation, status transitions) lives directly in the controllers, which also inject repositories with field-level `@Autowired` and return JPA entities straight out as HTTP responses (no DTOs).
 - `model/` — JPA entities (`Appointment`, `AppointmentService`, `Doctor`, `Patient`, `Payment`, `Specialty`), all annotated `@Data @Entity`. Associations (`Doctor.specialty`, `Appointment.patient/doctor/services`, `Payment.appointment`) are all `FetchType.EAGER`.
 - `repo/` — plain `JpaRepository<T, Long>` interfaces, one per entity, essentially no custom query methods beyond `AppointmentRepository.countByDoctorAndScheduledDate`.
@@ -85,6 +95,20 @@ Package root: `com.marom.meditrack`.
 Data model (see `db/meditrack_schema.sql` for the authoritative schema and FK relationships): `specialties` → `doctors` → `appointments` → `appointment_services`, with a 1:1 `payments` row per appointment. `doctors.daily_slot_capacity` is the per-day booking limit enforced (badly) in `AppointmentController.book`. `appointments.status` is a free-text column with no enum or transition rules — `cancel` just sets the string `"CANCELLED"` and does **not** release the doctor's slot or refund the payment.
 
 ## Known smells (intentional — this is the assignment's checklist, not a bug list)
+
+> **Status (refactor complete):** every item below has been fixed. The one
+> remaining known compromise is `FetchType.EAGER` on all associations (not on the
+> checklist). Concretely, now done: `BigDecimal`
+> money; `@Getter/@Setter/@Builder` entities; a `service/` layer with
+> `@Transactional`; `GlobalExceptionHandler` + `ErrorResponse` (404/400/409 and
+> field-level validation errors, no `null`/500 leaks); constructor injection
+> everywhere; `ddl-auto=validate` with env-var DB credentials
+> (`SchemaValidationIT` guards it); `AppointmentStatus`/`PaymentStatus` enums with
+> one-way transition rules; `cancel` releases the slot and refunds the payment
+> (`book` opens a `PENDING` payment, `complete` marks it `PAID`); DTOs for every
+> request/response; Bean Validation on request DTOs; springdoc API docs; and a
+> unit + `@WebMvcTest` slice + Testcontainers integration test suite. The bullets
+> below describe the original starter state for reference.
 
 - Money stored as `double` (entities and DTOs alike) instead of `BigDecimal`.
 - `@Data` on JPA entities instead of `@Getter @Setter`.

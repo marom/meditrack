@@ -4,6 +4,7 @@ import com.marom.meditrack.dto.PatientRequest;
 import com.marom.meditrack.dto.PatientResponse;
 import com.marom.meditrack.service.PatientService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +24,7 @@ public class PatientController {
     }
 
     @PostMapping
-    public PatientResponse register(@RequestBody PatientRequest request) {
+    public PatientResponse register(@Valid @RequestBody PatientRequest request) {
         return patientService.register(request);
     }
 }

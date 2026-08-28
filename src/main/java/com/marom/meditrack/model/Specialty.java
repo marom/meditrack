@@ -1,11 +1,21 @@
 package com.marom.meditrack.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.LocalDateTime;
 
-// SMELL: @Data on a JPA entity; everything public via getters/setters.
-@Data
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "specialties")
 public class Specialty {
@@ -14,7 +24,11 @@ public class Specialty {
     private Long id;
     private String name;
     private String slug;
+
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+    @Column(columnDefinition = "text")
     private String description;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

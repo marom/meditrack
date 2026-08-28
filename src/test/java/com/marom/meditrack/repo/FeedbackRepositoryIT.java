@@ -1,6 +1,7 @@
 package com.marom.meditrack.repo;
 
 import com.marom.meditrack.model.Appointment;
+import com.marom.meditrack.model.AppointmentStatus;
 import com.marom.meditrack.model.Doctor;
 import com.marom.meditrack.model.Feedback;
 import com.marom.meditrack.model.Patient;
@@ -108,7 +109,7 @@ class FeedbackRepositoryIT extends AbstractRepositoryIT {
         a.setAppointmentNo("APT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         a.setDoctor(doctor);
         a.setPatient(patient);
-        a.setStatus("COMPLETED");
+        a.setStatus(AppointmentStatus.COMPLETED);
         a.setScheduledDate(LocalDate.parse("2026-10-01"));
         a.setTotalAmount(BigDecimal.ZERO);
         a.setCreatedAt(LocalDateTime.now());

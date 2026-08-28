@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -54,9 +55,8 @@ class PatientControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void should_return500_when_registeringWithAnAlreadyUsedEmail() throws Exception {
-        // Arrange — email john.doe@example.com is seeded; the unique key is the
-        // only guard (no dedupe check in the service yet).
+    void should_return409_when_registeringWithAnAlreadyUsedEmail() throws Exception {
+        // Arrange — email john.doe@example.com is seeded.
         String body = objectMapper.writeValueAsString(PatientRequest.builder()
                 .firstName("Johnny")
                 .lastName("Doppelganger")
@@ -69,8 +69,27 @@ class PatientControllerIT extends AbstractIntegrationTest {
         mockMvc.perform(post("/api/v1/patients")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message", startsWith("Patient already exists with email")));
+    }
+
+    @Test
+    void should_return400WithFieldErrors_when_registeringWithInvalidPayload() throws Exception {
+        // Arrange — blank last name, malformed email.
+        String body = objectMapper.writeValueAsString(PatientRequest.builder()
+                .firstName("Alice")
+                .lastName("")
+                .email("nope")
+                .build());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/patients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.lastName").exists())
+                .andExpect(jsonPath("$.fieldErrors.email").exists());
     }
 }
