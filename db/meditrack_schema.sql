@@ -1,5 +1,5 @@
 -- MediTrack — Clinic Appointment & Billing schema (assignment project)
--- Run this in MySQL Workbench before starting. Recreates the database each time.
+-- Run this against MariaDB before starting. Recreates the database each time.
 
 DROP DATABASE IF EXISTS meditrack_db;
 CREATE DATABASE meditrack_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

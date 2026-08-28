@@ -5,7 +5,7 @@ works, but it breaks most of the conventions taught in the course. Your job is t
 use Claude Code to refactor it and then extend it.
 
 ## Run it
-1. Run `db/meditrack_schema.sql` in MySQL Workbench (creates `meditrack_db` + seed data).
+1. Run `db/meditrack_schema.sql` against MariaDB (creates `meditrack_db` + seed data).
 2. Run it from your IDE (Spring Boot Extension Pack / IntelliJ), or `mvn spring-boot:run`. (No Maven wrapper is bundled — your first refactor task can be to add one with `mvn -N wrapper:wrapper`.)
 3. Try it:
    - `GET  http://localhost:8080/api/v1/doctors`

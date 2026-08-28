@@ -11,22 +11,22 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      mysql:
-        image: mysql:8.4
+      mariadb:
+        image: mariadb:11.4
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: meditrack_db
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: meditrack_db
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
           --health-start-period=15s
 
     env:
-      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/meditrack_db
+      SPRING_DATASOURCE_URL: jdbc:mariadb://127.0.0.1:3306/meditrack_db
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
 
@@ -40,13 +40,13 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Load meditrack_schema.sql into MySQL
+      - name: Load meditrack_schema.sql into MariaDB
         env:
           MYSQL_PWD: root
         run: |
           for i in $(seq 1 30); do
             mysqladmin ping -h 127.0.0.1 -uroot --silent && break
-            echo "Waiting for MySQL to accept connections ($i/30)..."
+            echo "Waiting for MariaDB to accept connections ($i/30)..."
             sleep 2
           done
           mysql -h 127.0.0.1 -uroot < db/meditrack_schema.sql

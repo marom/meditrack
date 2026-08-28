@@ -1,20 +1,20 @@
 services:
-  mysql:
-    image: mysql:8.4
+  mariadb:
+    image: mariadb:11.4
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: meditrack_db
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: meditrack_db
     ports:
-      # Host 3307 to avoid colliding with a local MySQL on 3306; the app
-      # still reaches this container as mysql:3306 over the compose network.
+      # Host 3307 to avoid colliding with a local MariaDB/MySQL on 3306; the app
+      # still reaches this container as mariadb:3306 over the compose network.
       - "3307:3306"
     volumes:
       # meditrack_schema.sql drops/recreates meditrack_db and seeds reference data.
       # Runs only on first init (empty data dir); `docker compose down -v` to reset.
       - ./db/meditrack_schema.sql:/docker-entrypoint-initdb.d/01-meditrack_schema.sql:ro
-      - mysql-data:/var/lib/mysql
+      - mariadb-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -22,14 +22,14 @@ services:
   app:
     build: .
     depends_on:
-      mysql:
+      mariadb:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meditrack_db
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/meditrack_db
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
     ports:
       - "8080:8080"
 
 volumes:
-  mysql-data:
+  mariadb-data:

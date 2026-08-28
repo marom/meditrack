@@ -21,7 +21,7 @@ No Maven wrapper is bundled (adding one via `mvn -N wrapper:wrapper` is itself o
 - Java 21
 - Spring Boot 4.1.0
 - Maven
-- MySQL
+- MariaDB
 
 ## Package Structure
 Base package: `com.marom.ecommerce`
@@ -57,13 +57,13 @@ All handled in `GlobalExceptionHandler`, returning `ErrorResponse` JSON:
 | `AccessDeniedException`      | 403         |
 
 ## Database
-- MySQL, database `ecommerce_db`.
+- MariaDB, database `ecommerce_db`.
 - `ddl-auto=validate` — tables come from `schema.sql`, not Hibernate.
 
 
 ### Database
 
-MySQL, not embedded/in-memory. Before running the app, execute `db/meditrack_schema.sql` (e.g. via MySQL Workbench or `mysql -u root -p < db/meditrack_schema.sql`). It drops and recreates `meditrack_db` from scratch and seeds `specialties`, `doctors`, and `patients`; appointments/services/payments are created only through the API. Connection settings (including a plaintext password) are in `src/main/resources/application.properties`; `spring.jpa.hibernate.ddl-auto=update` lets Hibernate mutate the schema at boot — one of the intentional smells.
+MariaDB, not embedded/in-memory. Before running the app, execute `db/meditrack_schema.sql` (e.g. `mariadb -u root -p < db/meditrack_schema.sql`). It drops and recreates `meditrack_db` from scratch and seeds `specialties`, `doctors`, and `patients`; appointments/services/payments are created only through the API. Connection settings (including a plaintext password) are in `src/main/resources/application.properties`; `spring.jpa.hibernate.ddl-auto=update` lets Hibernate mutate the schema at boot — one of the intentional smells.
 
 ### Manual smoke test
 
