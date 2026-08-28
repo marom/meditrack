@@ -59,6 +59,15 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Load Mockito as a Java agent instead of letting it self-attach
+                         at runtime (removed in future JDKs; emits a warning otherwise). -->
+                    <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar -Xshare:off</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

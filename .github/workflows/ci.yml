@@ -19,10 +19,11 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
+          --health-start-period=15s
 
     env:
       SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/meditrack_db
@@ -30,17 +31,25 @@ jobs:
       SPRING_DATASOURCE_PASSWORD: root
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: "21"
           distribution: temurin
           cache: maven
 
       - name: Load meditrack_schema.sql into MySQL
-        run: mysql -h 127.0.0.1 -P 3306 -uroot -proot < db/meditrack_schema.sql
+        env:
+          MYSQL_PWD: root
+        run: |
+          for i in $(seq 1 30); do
+            mysqladmin ping -h 127.0.0.1 -uroot --silent && break
+            echo "Waiting for MySQL to accept connections ($i/30)..."
+            sleep 2
+          done
+          mysql -h 127.0.0.1 -uroot < db/meditrack_schema.sql
 
       - name: Run tests
         run: mvn -B verify
@@ -56,7 +65,7 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
