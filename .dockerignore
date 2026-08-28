@@ -1,0 +1,11 @@
+target/
+*.class
+.git/
+.github/
+.idea/
+*.iml
+.vscode/
+.claude/
+.playwright-mcp/
+.DS_Store
+*.md
