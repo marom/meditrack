@@ -11,7 +11,7 @@ WORKDIR /build
 COPY pom.xml .
 RUN --mount=type=cache,target=/root/.m2 mvn -B dependency:go-offline
 
-# Build the jar (CI runs the tests against MySQL; skip them here).
+# Build the jar (CI runs the tests against MariaDB; skip them here).
 COPY src ./src
 RUN --mount=type=cache,target=/root/.m2 mvn -B clean package -DskipTests
 
