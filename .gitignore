@@ -5,3 +5,4 @@ target/
 *.iml
 .vscode/
 .claude/settings.local.json
+.playwright-mcp/
